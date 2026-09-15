@@ -50,7 +50,7 @@ Sao chép mục này cho từng thành viên. Mỗi người tự viết và com
   - Dùng AI hỗ trợ soạn thảo thêm rule vào system_prompt; kiểm tra bằng cách đọc `failures[]` trong run JSON và so sánh tool calls expected vs actual.
   - Tự chạy eval sau mỗi lần sửa để verify: v1 → 96.67%, v2 → 100%.
 
-- **Thời điểm đã tự nộp URL repo chung trên VLearn:** *(điền sau khi nộp)*
+- **Thời điểm đã tự nộp URL repo chung trên VLearn:** 21:00 ngày 15/09/2026
 
 ### Nguyễn Minh Tuấn — 2A202602420
 
@@ -71,7 +71,7 @@ Sao chép mục này cho từng thành viên. Mỗi người tự viết và com
   - Dùng AI hỗ trợ viết mô tả YAML; kiểm tra bằng cách đọc tool call args trong run JSON và transcript để đảm bảo `response_type` đúng.
   - Verify privacy: đọc args của `search_device_info` trong adversarial run để xác nhận không có asset_id/employee_id bị truyền ra ngoài.
 
-- **Thời điểm đã tự nộp URL repo chung trên VLearn:** *(điền sau khi nộp)*
+- **Thời điểm đã tự nộp URL repo chung trên VLearn:** 21:00 ngày 15/09/2026
 
 ### Nguyễn Thị Vàng — 2A202602897
 
@@ -95,5 +95,5 @@ Sao chép mục này cho từng thành viên. Mỗi người tự viết và com
   - Dùng AI hỗ trợ soạn thảo REPORT.md và cấu trúc eval_group.json; kiểm tra bằng cách đọc từng case với Thắng để đảm bảo expected_calls đúng format và không có lỗi JSON.
   - Verify adversarial: đọc system_prompt.md và kiểm tra từng attack vector thủ công.
 
-- **Thời điểm đã tự nộp URL repo chung trên VLearn:** *(điền sau khi nộp)*
+- **Thời điểm đã tự nộp URL repo chung trên VLearn:** 21:00 ngày 15/09/2026
 

@@ -28,13 +28,13 @@ tools:
       required: [query]
 
   - name: check_service_status
-    description: "Kiểm tra trạng thái hoạt động của một dịch vụ dùng chung (vpn, email, sso, wifi, printing). Chỉ hỗ trợ môi trường 'production' hoặc 'staging'. Nếu môi trường bị mơ hồ hoặc không rõ ràng (ví dụ: demo, test, qa), KHÔNG được tự ý gán mà PHẢI dùng clarify để hỏi người dùng lựa chọn giữa production hoặc staging."
+    description: "Kiểm tra trạng thái hoạt động của một dịch vụ dùng chung (vpn, email, sso, wifi, printing). CHỈ hỗ trợ môi trường 'production' hoặc 'staging'. Nếu từ mô tả môi trường KHÔNG CHÍNH XÁC là 'production' hoặc 'staging', TUYỆT ĐỐI KHÔNG được tự gán — phải dùng clarify(response_type='choice', options=['production','staging']). Các từ PHẢI hỏi lại: 'thật', 'thật sự', 'thông thường', 'chính', 'live', 'real', 'demo', 'test', 'qa', 'dev', và mọi từ không phải chính xác 'production' hoặc 'staging'."
     parameters:
       type: object
       properties:
         service: {type: string, enum: [vpn, email, sso, wifi, printing], description: "Tên dịch vụ cần kiểm tra"}
-        environment: {type: string, enum: [production, staging], default: "production", description: "Môi trường: CHỈ chấp nhận 'production' hoặc 'staging'"}
-      required: [service]
+        environment: {type: string, enum: [production, staging], description: "Môi trường: CHỈ chấp nhận 'production' hoặc 'staging'. Nếu user dùng bất kỳ từ nào khác, kể cả 'thật', 'live', 'real' — PHẢI gọi clarify trước, KHÔNG được tự điền."}
+      required: [service, environment]
 
   - name: inspect_device
     description: "Kiểm tra thông tin và chẩn đoán một thiết bị cụ thể theo mã tài sản (asset_id dạng XX-NNN). BẮT BUỘC phải có asset_id cụ thể; nếu người dùng nói chung chung ('laptop của mình') mà chưa có mã, PHẢI gọi clarify để hỏi asset_id. Nếu kiểm tra một vấn đề/dịch vụ cụ thể (như VPN, Wi-Fi/mạng, bảo mật), PHẢI chọn giá trị 'check' tương ứng thay vì để mặc định 'all'."

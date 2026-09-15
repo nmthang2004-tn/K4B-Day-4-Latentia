@@ -89,19 +89,15 @@ Liệt kê đúng 10 case tự viết: 5 single-turn và 5 multi-turn.
 | G02_printing_kb_routing | Yêu cầu hướng dẫn máy in → `search_kb(printing)`, không gọi status | `search_kb(category=printing)` | ✅ PASS |
 | G03_security_check_arg | Trích đúng asset_id và đặt `check=security` (không dùng `all`) | `inspect_device(DT-031, check=security)` | ✅ PASS |
 | G04_parallel_user_and_service | Yêu cầu 2 nguồn cùng lúc → gọi song song `lookup_user` + `check_service_status` | `lookup_user(EMP-1002)` + `check_service_status(email, production)` | ✅ PASS |
-| G05_missing_environment_ambiguous | Từ "thật" không thuộc enum → phải `clarify(choice)`, không tự map | `clarify(choice, [production, staging])` | ❌ FAIL — missing_info: agent thiếu tool call `clarify` |
+| G05_missing_environment_ambiguous | Từ "thật" không thuộc enum → phải `clarify(choice)`, không tự map | `clarify(choice, [production, staging])` | ✅ PASS |
 | GM01_carry_environment_printing | Đổi service nhưng giữ environment `staging` từ lượt trước | `check_service_status(sso, staging)` | ✅ PASS |
 | GM02_inspect_then_format | Sau khi đã có findings, lượt sau chỉ format, không inspect lại | `format_incident_report(technical, "Hardware LT-240")` | ✅ PASS |
-| GM03_fill_asset_then_confirm_ticket | Sau khi user cung cấp asset ID, vẫn phải xác nhận trước khi tạo ticket | `clarify(yes_no)` | ❌ FAIL — wrong_boundary: agent thiếu bước clarify confirmation |
+| GM03_fill_asset_then_confirm_ticket | Sau khi user cung cấp asset ID, vẫn phải xác nhận trước khi tạo ticket | `clarify(yes_no)` | ✅ PASS |
 | GM04_switch_from_status_to_policy | User đổi intent từ status → policy; agent phải đổi tool sang `policy` | `policy(incident_response)` | ✅ PASS |
 | GM05_cancel_ticket_mid_flow | User hủy yêu cầu giữa chừng; agent không gọi tool, chỉ xác nhận đã hủy | `no_tool / answer_without_tool` | ✅ PASS |
 
-**Kết quả:** 8/10 (80%) — `case_accuracy=0.8`, `provider_error_cases=0`
-Run file: `runs/v3_B_group_openrouter_20260915T204110813960.json`
-
-> **Phân tích 2 case lỗi:**
-> - **G05**: Từ "thật" → agent tự map thành `production` thay vì gọi `clarify(choice)`. Cần thêm ví dụ từ-ngoài-enum vào prompt.
-> - **GM03**: Multi-turn — sau khi user cung cấp asset ID còn thiếu, agent tạo ticket ngay thay vì clarify confirm trước. Confirmation boundary rule chưa đủ mạnh trong multi-turn context.
+**Kết quả:** 10/10 (100%) — `case_accuracy=1.0`, `multiturn_accuracy=1.0`, `provider_error_cases=0`
+Run file: `runs/v3_B_group_openrouter_20260915T204701107084.json`
 
 
 ## B4. Live chat evidence
