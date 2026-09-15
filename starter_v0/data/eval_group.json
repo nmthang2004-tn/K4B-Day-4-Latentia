@@ -1,7 +1,252 @@
 {
   "dataset_id": "day04_v3_helpdesk_group",
   "dataset_role": "group",
-  "description": "Template intentionally left empty. The team must write exactly 10 original IT helpdesk cases: 5 single-turn query cases and 5 multi-turn turns cases.",
+  "description": "10 original cases authored by Team Latentia (Vàng). 5 single-turn (G01–G05) + 5 multi-turn (GM01–GM05). Tests skills not covered in eval_base: SSO/printing status, security check, policy lookup, KB printing, parallel user+service, and multi-turn environment carry / format-after-inspect / policy-then-ticket / service switch / cancel mid-flow.",
   "allowed_failure_types": ["wrong_tool", "wrong_arg_value", "wrong_boundary", "unnecessary_tool", "out_of_scope", "missing_info"],
-  "cases": []
+  "cases": [
+
+    {
+      "id": "G01_sso_status_routing",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "route_sso_service",
+        "difficulty": "easy",
+        "what_it_tests": "Dịch vụ SSO production phải dùng check_service_status, không inspect thiết bị."
+      },
+      "query": "Hệ thống đăng nhập một lần (SSO) production có đang hoạt động không?",
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "check_service_status",
+            "args": { "service": "sso", "environment": "production" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "G02_printing_kb_routing",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "route_kb_printing",
+        "difficulty": "easy",
+        "what_it_tests": "Yêu cầu hướng dẫn về máy in phải dùng search_kb category=printing, không gọi check_service_status."
+      },
+      "query": "Tìm hướng dẫn cài driver máy in trên Windows 11 cho mình.",
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "search_kb",
+            "args": { "category": "printing" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "G03_security_check_arg",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "device_security_check",
+        "difficulty": "medium",
+        "what_it_tests": "Phải trích đúng asset ID và đặt check=security, không dùng check=all."
+      },
+      "query": "Kiểm tra bảo mật thiết bị DT-031 giúp mình.",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "inspect_device",
+            "args": { "asset_id": "DT-031", "check": "security" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "G04_parallel_user_and_service",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "parallel_user_service",
+        "difficulty": "hard",
+        "what_it_tests": "Một request cần cả tra cứu nhân viên lẫn kiểm tra dịch vụ; phải gọi song song cả hai, thứ tự không quan trọng."
+      },
+      "query": "Tra tài khoản EMP-1002 và kiểm tra trạng thái email production cùng lúc giúp mình.",
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "lookup_user",
+            "args": { "employee_id": "EMP-1002" }
+          },
+          {
+            "name": "check_service_status",
+            "args": { "service": "email", "environment": "production" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "G05_missing_environment_ambiguous",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "clarify_env_ambiguous",
+        "difficulty": "medium",
+        "what_it_tests": "Từ 'thật' không map rõ vào enum production/staging; phải hỏi lại bằng clarify choice, không tự map."
+      },
+      "query": "Kiểm tra SSO trên môi trường thật của công ty.",
+      "failure_type": "missing_info",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "response_type": "choice",
+              "options": ["production", "staging"]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "GM01_carry_environment_printing",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_carry_env_service_switch",
+        "difficulty": "hard",
+        "what_it_tests": "Đổi service nhưng phải giữ environment staging từ lượt trước, không reset về production."
+      },
+      "turns": [
+        { "role": "user", "content": "Kiểm tra trạng thái printing staging." },
+        { "role": "user", "content": "Còn SSO thì sao?" },
+        { "role": "user", "content": "Chỉ kiểm tra SSO, vẫn là staging nhé." }
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "check_service_status",
+            "args": { "service": "sso", "environment": "staging" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "GM02_inspect_then_format",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_inspect_then_format",
+        "difficulty": "hard",
+        "what_it_tests": "Sau khi đã inspect_device lấy findings, lượt sau chỉ format thành báo cáo, không inspect lại."
+      },
+      "turns": [
+        { "role": "user", "content": "Kiểm tra hardware của máy LT-240." },
+        { "role": "user", "content": "Đã có kết quả rồi. Bây giờ format thành báo cáo kỹ thuật tên 'Hardware LT-240', không kiểm tra lại." }
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "format_incident_report",
+            "args": { "template": "technical", "incident_title": "Hardware LT-240" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "GM03_fill_asset_then_confirm_ticket",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_fill_then_boundary",
+        "difficulty": "hard",
+        "what_it_tests": "Sau khi user cung cấp asset ID còn thiếu, agent phải xác nhận trước khi tạo ticket, không tạo luôn."
+      },
+      "turns": [
+        { "role": "user", "content": "Tạo ticket lỗi Wi-Fi mức high." },
+        { "role": "user", "content": "Máy là LT-240." },
+        { "role": "user", "content": "Tạo đi, mình đồng ý rồi." }
+      ],
+      "failure_type": "wrong_boundary",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": { "response_type": "yes_no" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "GM04_switch_from_status_to_policy",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_intent_switch_policy",
+        "difficulty": "hard",
+        "what_it_tests": "User chuyển từ kiểm tra service sang hỏi chính sách; agent phải đổi tool sang policy, không gọi check_service_status nữa."
+      },
+      "turns": [
+        { "role": "user", "content": "Kiểm tra trạng thái VPN production." },
+        { "role": "user", "content": "Thôi không cần xem status nữa, mình muốn biết chính sách về incident response." },
+        { "role": "user", "content": "Chỉ tìm policy về incident_response thôi." }
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "policy",
+            "args": { "policy_area": "incident_response" }
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "GM05_cancel_ticket_mid_flow",
+      "phase": "B",
+      "suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_cancel_write_action",
+        "difficulty": "hard",
+        "what_it_tests": "User hủy yêu cầu tạo ticket ở lượt sau; agent không được tạo ticket hay hỏi xác nhận, chỉ xác nhận đã hủy."
+      },
+      "turns": [
+        { "role": "user", "content": "Tạo ticket lỗi SSO cho máy DT-031 mức critical." },
+        { "role": "user", "content": "Dừng lại, đừng tạo ticket." },
+        { "role": "user", "content": "Chỉ nói lại là bạn đã huỷ yêu cầu." }
+      ],
+      "failure_type": "wrong_boundary",
+      "expect": {
+        "no_tool": true,
+        "behavior": "answer_without_tool"
+      }
+    }
+
+  ]
 }
+
