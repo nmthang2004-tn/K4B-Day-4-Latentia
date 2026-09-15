@@ -1,33 +1,40 @@
 # Day 04 Lab v3 Report — Trợ lý AI của nhóm
 
-- Lĩnh vực tự chọn:
-- Nhiệm vụ và luồng cơ bản đã chốt trước v0:
-- Đường dẫn bộ 30 câu cơ bản và 12 câu an toàn; commit chốt bộ trước v0:
-- Chức năng mở rộng ngoài luồng cơ bản (nếu có; tối đa 10 trong tổng 100 điểm):
+- Lĩnh vực tự chọn: IT Helpdesk (Northstar Labs)
+- Nhiệm vụ và luồng cơ bản đã chốt trước v0: Hỗ trợ sự cố kỹ thuật nội bộ (tra cứu trạng thái dịch vụ dùng chung, chẩn đoán thiết bị, tra cứu danh bạ nhân viên, tra cứu knowledge base/policy, và tạo ticket sau khi người dùng xác nhận).
+- Đường dẫn bộ 30 câu cơ bản và 12 câu an toàn; commit chốt bộ trước v0: `data/eval_base.json`, `data/eval_adversarial.json`
+- Chức năng mở rộng ngoài luồng cơ bản (nếu có; tối đa 10 trong tổng 100 điểm): (Đang chuẩn bị)
 
 ## Team
 
-- Team:
+- Team: Latentia
 - Thành viên và INDIVIDUAL: [TEAM.md](../../TEAM.md)
-- Members:
-- Provider/model:
+- Members: Nguyễn Minh Thắng (SWE - Prompt), Nguyễn Minh Tuấn (SWE - Tools), Nguyễn Thị Vàng (BA)
+- Provider/model: openrouter / openai/gpt-4o-mini
 
 # PHẦN A — Giới thiệu agent
 
 ## A1. Agent này làm được gì
 
-> Viết 1–2 câu mô tả capability và giới hạn của agent.
+> Trợ lý hỗ trợ kỹ thuật nội bộ cho công ty Northstar Labs: tra cứu sự cố hệ thống (VPN, Email, SSO...), chẩn đoán thiết bị theo asset_id, tìm tài liệu kỹ thuật KB/chính sách, và hỗ trợ tạo ticket khi có sự cố nghiêm trọng sau khi được người dùng duyệt xác nhận. Giới hạn: Không thực hiện các tác vụ lập trình/ngoài phạm vi IT helpdesk và không tiết lộ dữ liệu nhạy cảm ra môi trường công cộng.
 
 **Link dùng thử:**
 
-> URL:
+> URL: CLI `python chat.py --provider openrouter`
 
 ## A2. Tool agent có
 
 | Tool | Chức năng | Core / optional / team-built |
 |---|---|---|
-| clarify | Hỏi bổ sung hoặc xác nhận | core |
-|  |  |  |
+| clarify | Hỏi làm rõ thông tin thiếu (asset_id, employee_id, env) hoặc xin xác nhận trước khi tạo ticket | core |
+| search_kb | Tìm kiếm hướng dẫn kỹ thuật theo danh mục dịch vụ | core |
+| check_service_status | Kiểm tra trạng thái dịch vụ (vpn, email, wifi...) trên production/staging | core |
+| inspect_device | Chẩn đoán thiết bị theo mã tài sản (asset_id) với phạm vi check tương ứng | core |
+| lookup_user | Tra cứu nhân viên theo mã EMP-NNNN (kết quả đã kèm assigned devices) | core |
+| format_incident_report | Định dạng kết quả thành báo cáo sự cố theo mẫu | core |
+| policy | Tra cứu chính sách và quy định IT nội bộ | optional |
+| search_device_info | Tra cứu thông số thiết bị công khai trên web (không rò rỉ dữ liệu nội bộ) | optional |
+| create_ticket | Tạo ticket hỗ trợ mới (bắt buộc xác nhận trước khi gọi) | optional |
 
 ## A3. Câu hỏi mẫu
 
