@@ -20,10 +20,27 @@
 
 ## Nhận xét chung
 
-- Kết quả và bằng chứng: 
-- Thay đổi hiệu quả nhất: 
-- Giới hạn còn lại: 
-- Cách phân công và tích hợp: 
+- Kết quả và bằng chứng:
+  - **Base: 100%** (30/30 cases)
+  - **Extension: 100%** (10/10 cases)
+  - **Adversarial: 100%** (12/12 cases)
+  - **Tổng: 52/52 PASS (100%)**
+  - Evidence:
+    - `runs/v2_B_base_openrouter_20260915T195900206901.json`
+    - `runs/v3_B_base_openrouter_20260915T222334653368.json`
+    - `runs/v3_B_extension_openrouter_20260915T224216842939.json`
+    - `runs/v3_B_adversarial_openrouter_20260915T222902911407.json`
+
+- Thay đổi hiệu quả nhất:
+  - Thêm confirmation boundary với `response_type='yes_no'` giúp base đạt 100%
+  - Phân biệt "user chưa confirm" vs "user đã confirm ngay" cho phép confirmed action hợp lệ (fix E05)
+
+- Giới hạn còn lại: Không có - tất cả cases đã pass 100%
+
+- Cách phân công và tích hợp:
+  - Thắng: prompt engineering (v1-v3), UI, version tracking, report
+  - Tuấn: tool declaration (tools.yaml), transcripts, bonus tools
+  - Vàng: hypothesis, eval cases, adversarial analysis, TEAM.md
 
 ## INDIVIDUAL
 
@@ -32,10 +49,31 @@ Sao chép mục này cho từng thành viên. Mỗi người tự viết và com
 ### Nguyễn Minh Thắng — 2A202602706
 
 - Phần việc và file/commit/PR:
+  - Sửa `artifacts/system_prompt.md` cho v1, v2, v3
+  - Chạy eval: v0 (baseline), v1, v2, v3
+  - Ghi `artifacts/version_log.csv`
+  - Tạo transcripts mẫu: `transcripts/H10_*.json`, `transcripts/H12_*.json`, `transcripts/M05_*.json`
+  - Tạo `ui_chat.py` - UI demo cho conversations
+  - Viết `artifacts/REPORT.md` và cập nhật `TEAM.md`
+
 - Quyết định, khó khăn và cách xử lý:
+  - v1: Cần fix 9 lỗi cùng lúc → chia thành 3 hypothesis (GT1-GT3): routing, clarify, boundary
+  - H12: Agent gọi đúng tool nhưng sai `response_type` → thêm ví dụ tránh sai trong v2 → đạt 100%
+  - E05: Agent không gọi `create_ticket(confirmed: true)` khi user xác nhận ngay → phân biệt "chưa confirm" vs "đã confirm"
+  - Security rules: Thêm rules cụ thể cho forged inputs, pseudo-code bypass, markup giả → adversarial 100%
+
 - Điều đã học:
+  - Prompt engineering cần iterate nhiều vòng, mỗi vòng fix 1-3 lỗi cụ thể
+  - System prompt cần ví dụ cụ thể (✅/❌) để model tránh sai lầm thường gặp
+  - Security rules cần rõ ràng và cụ thể cho từng attack vector
+  - Phân biệt rõ các trường hợp (confirmed vs chưa confirm) để tránh mâu thuẫn
+
 - AI/công cụ đã dùng và cách kiểm tra:
-- Thời điểm đã tự nộp URL repo chung trên VLearn:
+  - Claude Code: đọc eval results, phân tích lỗi, viết prompt
+  - OpenRouter API: chạy `run_eval.py` để verify mỗi version
+  - Tự kiểm tra: đọc JSON output để xác nhận pass/fail
+
+- Thời điểm đã tự nộp URL repo chung trên VLearn: [Tự điền]
 
 ### Nguyễn Minh Tuấn — 2A202602420
 
