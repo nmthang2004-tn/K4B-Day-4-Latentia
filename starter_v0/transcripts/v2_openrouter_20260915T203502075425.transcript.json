@@ -1,0 +1,16 @@
+{
+  "transcript_id": "v2_openrouter_20260915T203502075425",
+  "version": "v2",
+  "artifact_version": "v2+p2ae6989183cd+t0dd0030bb36a",
+  "prompt_hash": "2ae6989183cd8e8f4630d294fcdb15bf59ed55e01e15bef878a9eb278f0b7c19",
+  "tools_hash": "0dd0030bb36a05c08c46b2620d700d4f6f44b23aa91868510b4e64342ea706b2",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "D:\\DayVinAI\\Day4\\Lab04\\K4B-Day-4-Latentia\\starter_v0\\artifacts\\system_prompt.md",
+  "tools": "D:\\DayVinAI\\Day4\\Lab04\\K4B-Day-4-Latentia\\starter_v0\\artifacts\\tools.yaml",
+  "history_window": 5,
+  "max_tool_rounds": 4,
+  "created_at": "2026-09-15T20:35:02",
+  "updated_at": "2026-09-15T20:35:07",
+  "turns": []
+}
