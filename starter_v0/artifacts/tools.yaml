@@ -54,45 +54,45 @@ tools:
       required: [employee_id]
 
   - name: format_incident_report
-    description: "Trình bày các kết quả đã thu thập thành báo cáo sự cố có cấu trúc. Chỉ dùng khi người dùng yêu cầu xuất báo cáo dựa trên các dữ liệu đã kiểm tra trước đó."
+    description: "Trình bày các kết quả đã thu thập thành báo cáo sự cố có cấu trúc (incident report). Dùng khi người dùng yêu cầu tổng hợp hoặc định dạng báo cáo sau khi đã chẩn đoán/kiểm tra. KHÔNG gọi lại các công cụ kiểm tra trước đó nếu dữ liệu đã có trong ngữ cảnh."
     parameters:
       type: object
       properties:
         findings:
           type: array
           default: []
-          description: "Các kết quả đã thu thập từ các bước trước"
+          description: "Danh sách các kết quả đã thu thập từ các bước kiểm tra trước đó"
           items:
             type: object
             properties:
-              label: {type: string}
-              detail: {type: string}
-              source: {type: string}
-              status: {type: string}
-        template: {type: string, enum: [brief, technical, handoff], default: "brief", description: "Mẫu báo cáo"}
-        incident_title: {type: string, default: "IT incident", description: "Tiêu đề sự cố"}
+              label: {type: string, description: "Nhãn thành phần (ví dụ: Network, VPN, Hardware)"}
+              detail: {type: string, description: "Chi tiết chẩn đoán hoặc trạng thái sự cố"}
+              source: {type: string, description: "Nguồn thông tin (ví dụ: inspect_device, check_service_status)"}
+              status: {type: string, description: "Tình trạng (healthy, degraded, failed...)"}
+        template: {type: string, enum: [brief, technical, handoff], default: "brief", description: "Mẫu báo cáo: brief (tóm tắt ngắn), technical (báo cáo kỹ thuật chi tiết), handoff (bàn giao ca trực)"}
+        incident_title: {type: string, default: "IT incident", description: "Tiêu đề của báo cáo sự cố"}
       required: [findings, template]
 
   # ---------------- Optional/advanced tools ----------------
   - name: search_device_info
-    description: "Tìm thông tin công khai về một model thiết bị trên web. Chỉ truyền hãng, model và loại thông tin; không truyền asset ID, employee ID hoặc dữ liệu nội bộ."
+    description: "Tìm kiếm thông tin công khai về một model thiết bị trên web. TUYỆT ĐỐI KHÔNG truyền mã tài sản nội bộ (như LT-xxx, DT-xxx), mã nhân viên (EMP-xxxx), email công ty hoặc bất kỳ dữ liệu nội bộ nào vào tham số. CHỈ truyền tên hãng công khai và dòng sản phẩm chung."
     parameters:
       type: object
       properties:
-        manufacturer: {type: string, description: "Hãng sản xuất công khai, ví dụ Lenovo"}
-        model: {type: string, description: "Tên model công khai, ví dụ ThinkPad T14 Gen 4"}
-        query_type: {type: string, enum: [specs, drivers, support, compatibility], default: "support", description: "Loại thông tin cần tìm"}
-        max_results: {type: integer, default: 3, description: "Số kết quả, tối đa 5"}
+        manufacturer: {type: string, description: "Hãng sản xuất công khai (ví dụ: Lenovo, Dell, HP, Apple). Tuyệt đối không chứa ID nội bộ"}
+        model: {type: string, description: "Tên model thương mại công khai (ví dụ: ThinkPad T14 Gen 4, Latitude 5420). Tuyệt đối không truyền mã tài sản (asset_id như LT-xxx hay DT-xxx)"}
+        query_type: {type: string, enum: [specs, drivers, support, compatibility], default: "support", description: "Loại thông tin cần tìm: specs (thông số kỹ thuật), drivers (trình điều khiển), support (hỗ trợ), compatibility (tương thích)"}
+        max_results: {type: integer, default: 3, description: "Số kết quả cần lấy, tối đa 5"}
       required: [manufacturer, model, query_type]
 
   - name: policy
-    description: "Tìm trong chính sách IT nội bộ của công ty. Dùng khi người dùng hỏi về quy định, chính sách bảo mật, truy cập hoặc quy trình hỗ trợ."
+    description: "Tìm trong chính sách và quy trình IT nội bộ của công ty. Dùng khi người dùng hỏi về quy định, quy trình xử lý sự cố, chính sách bảo mật hoặc quyền truy cập."
     parameters:
       type: object
       properties:
-        query: {type: string, default: "", description: "Nội dung cần tìm"}
-        policy_area: {type: string, enum: [all, access_control, data_privacy, external_tools, incident_response, service_operations, ticketing], default: "all", description: "Nhóm chính sách"}
-        top_k: {type: integer, default: 3, description: "Số mục"}
+        query: {type: string, default: "", description: "Nội dung hoặc từ khóa chính sách cần tìm"}
+        policy_area: {type: string, enum: [all, access_control, data_privacy, external_tools, incident_response, service_operations, ticketing], default: "all", description: "Nhóm chính sách: incident_response (xử lý sự cố, báo cáo khẩn), access_control (quyền truy cập), data_privacy (bảo mật dữ liệu nhạy cảm), external_tools (quy định dùng web/tool ngoài), service_operations (vận hành), ticketing (quy định ticket), all (chung)"}
+        top_k: {type: integer, default: 3, description: "Số mục chính sách cần lấy"}
       required: [query]
 
   - name: create_ticket
