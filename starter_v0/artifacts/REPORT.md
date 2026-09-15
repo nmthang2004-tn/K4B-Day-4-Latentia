@@ -58,8 +58,8 @@ total_cases`, và tool result error đã được review thủ công.
 | Version | Prompt/tool change | Hypothesis | Metric | Before | After | Run file |
 |---|---|---|---|---:|---:|---|
 | v0 | Starter chưa sửa | Baseline — đo lỗi gốc | case_accuracy | — | **70%** (21/30) | `runs/v0_B_base_openrouter_20260915T182340501222.json` |
-| v1 | Thêm **Tool Routing Rules** + **Clarify Rules** + **Confirmation Boundary** vào `system_prompt.md`; cải thiện description `check`, `employee_id`, `environment`, `create_ticket` trong `tools.yaml` | **GT1** wrong_tool (H04,H13,H17): prompt thiếu routing rule → thêm bảng route + map `check=<service>`. **GT2** missing_info (H10,H11,H19): agent tự đoán ID → bắt buộc clarify khi thiếu. **GT3** wrong_boundary (H12,M05,M09): không có confirmation order → clarify(yes_no) bắt buộc TRƯỚC create_ticket | case_accuracy | 70% | — (chờ chạy) | — |
-| v2 | *(điền sau khi phân tích kết quả v1)* | *(đặt sau khi xem lỗi còn lại của v1)* | case_accuracy | — | — | — |
+| v1 | Thêm **Tool Routing Rules** + **Clarify Rules** + **Confirmation Boundary** vào `system_prompt.md`; cải thiện description `check`, `employee_id`, `environment`, `create_ticket` trong `tools.yaml` | **GT1** wrong_tool (H04,H13,H17): prompt thiếu routing rule → thêm bảng route + map `check=<service>`. **GT2** missing_info (H10,H11,H19): agent tự đoán ID → bắt buộc clarify khi thiếu. **GT3** wrong_boundary (H12,M05,M09): không có confirmation order → clarify(yes_no) bắt buộc TRƯỚC create_ticket | case_accuracy | 70% | **96.67%** (29/30) | `runs/v1_B_base_openrouter_20260915T193806821474.json` |
+| v2 | Chỉnh `tools.yaml`: thêm `response_type` mặc định `yes_no` vào `clarify` khi dùng trong ngữ cảnh xác nhận write action; hoặc thêm rule trong prompt: "khi xác nhận trước create_ticket phải dùng `response_type=yes_no`" | **GT4** wrong_boundary (H12 còn lại): v1 gọi đúng `clarify` nhưng sai `response_type="text"` thay vì `"yes_no"` → tool declaration hoặc prompt chưa ràng buộc rõ kiểu phản hồi cho confirmation boundary | case_accuracy | 96.67% | — (chờ chạy) | — |
 | v3 | *(điền sau khi phân tích kết quả v2)* | *(đặt sau khi xem lỗi còn lại của v2)* | case_accuracy | — | — | — |
 
 ## B2. Failure analysis
@@ -82,7 +82,16 @@ Liệt kê đúng 10 case tự viết: 5 single-turn và 5 multi-turn.
 
 | Case ID | What it tests | Expected behavior | Result |
 |---|---|---|---|
-|  |  |  |  |
+| G01_sso_status_routing | SSO production phải dùng `check_service_status`, không `inspect_device` | `check_service_status(sso, production)` | *(chờ run)* |
+| G02_printing_kb_routing | Yêu cầu hướng dẫn máy in → `search_kb(printing)`, không gọi status | `search_kb(category=printing)` | *(chờ run)* |
+| G03_security_check_arg | Trích đúng asset_id và đặt `check=security` (không dùng `all`) | `inspect_device(DT-031, check=security)` | *(chờ run)* |
+| G04_parallel_user_and_service | Yêu cầu 2 nguồn cùng lúc → gọi song song `lookup_user` + `check_service_status` | `lookup_user(EMP-1002)` + `check_service_status(email, production)` | *(chờ run)* |
+| G05_missing_environment_ambiguous | Từ "thật" không thuộc enum → phải `clarify(choice)`, không tự map | `clarify(choice, [production, staging])` | *(chờ run)* |
+| GM01_carry_environment_printing | Đổi service nhưng giữ environment `staging` từ lượt trước | `check_service_status(sso, staging)` | *(chờ run)* |
+| GM02_inspect_then_format | Sau khi đã có findings, lượt sau chỉ format, không inspect lại | `format_incident_report(technical, "Hardware LT-240")` | *(chờ run)* |
+| GM03_fill_asset_then_confirm_ticket | Sau khi user cung cấp asset ID, vẫn phải xác nhận trước khi tạo ticket | `clarify(yes_no)` | *(chờ run)* |
+| GM04_switch_from_status_to_policy | User đổi intent từ status → policy; agent phải đổi tool sang `policy` | `policy(incident_response)` | *(chờ run)* |
+| GM05_cancel_ticket_mid_flow | User hủy yêu cầu giữa chừng; agent không gọi tool, chỉ xác nhận đã hủy | `no_tool / answer_without_tool` | *(chờ run)* |
 
 ## B4. Live chat evidence
 
@@ -121,10 +130,10 @@ nhóm tự xây.
 
 ## B7. Technical reflection
 
-- Fix nào thuộc `system_prompt.md`?
-- Fix nào thuộc `tools.yaml`?
-- Failure nào không thể chỉ nhìn automatic score?
-- Nếu có thêm một vòng, nhóm sẽ thử hypothesis nào?
+- **Fix thuộc `system_prompt.md`:** Tool Routing Rules (v1), Clarify Rules cho asset_id/employee_id/environment (v1), Confirmation Boundary order (v1); dự kiến thêm rule `response_type=yes_no` khi confirm write action (v2).
+- **Fix thuộc `tools.yaml`:** Cải thiện description `check` enum của `inspect_device`, description `employee_id`/`environment` rõ ràng hơn, thêm ghi chú `confirmed` trong `create_ticket` (v1); dự kiến cập nhật clarify description để ràng buộc `response_type=yes_no` trong ngữ cảnh confirmation (v2).
+- **Failure không thể chỉ nhìn automatic score:** H12 v1 bị sai `response_type` (text vs yes_no) — automatic score chỉ thấy `wrong_boundary`, phải đọc `failures[]` trong run JSON mới biết chính xác arg nào sai. M05 v0 gọi sai thứ tự create_ticket→clarify — cần đọc tool_results sequence, không chỉ nhìn tên tool.
+- **Nếu có thêm một vòng (v3):** Sau khi v2 fix H12, kiểm tra xem còn case nào multiturn carry context bị fail không; nếu còn thì thử thêm rule "explicit context carry" cho environment và asset_id trong hội thoại nhiều lượt.
 
 # PHẦN C — Checkout trước khi nộp
 
