@@ -50,16 +50,24 @@ total_cases`, và tool result error đã được review thủ công.
 
 | Version | Prompt/tool change | Hypothesis | Metric | Before | After | Run file |
 |---|---|---|---|---:|---:|---|
-| v0 | baseline |  |  |  |  |  |
-| v1 |  |  |  |  |  |  |
-| v2 |  |  |  |  |  |  |
-| v3 |  |  |  |  |  |  |
+| v0 | Starter chưa sửa | Baseline — đo lỗi gốc | case_accuracy | — | **70%** (21/30) | `runs/v0_B_base_openrouter_20260915T182340501222.json` |
+| v1 | Thêm **Tool Routing Rules** + **Clarify Rules** + **Confirmation Boundary** vào `system_prompt.md`; cải thiện description `check`, `employee_id`, `environment`, `create_ticket` trong `tools.yaml` | **GT1** wrong_tool (H04,H13,H17): prompt thiếu routing rule → thêm bảng route + map `check=<service>`. **GT2** missing_info (H10,H11,H19): agent tự đoán ID → bắt buộc clarify khi thiếu. **GT3** wrong_boundary (H12,M05,M09): không có confirmation order → clarify(yes_no) bắt buộc TRƯỚC create_ticket | case_accuracy | 70% | — (chờ chạy) | — |
+| v2 | *(điền sau khi phân tích kết quả v1)* | *(đặt sau khi xem lỗi còn lại của v1)* | case_accuracy | — | — | — |
+| v3 | *(điền sau khi phân tích kết quả v2)* | *(đặt sau khi xem lỗi còn lại của v2)* | case_accuracy | — | — | — |
 
 ## B2. Failure analysis
 
 | Case ID | Failure type | Actual calls | What failed | Fix |
 |---|---|---|---|---|
-|  |  |  |  |  |
+| H04 | wrong_tool | `lookup_user` ✓ + **extra** `inspect_device(asset_id="EMP-1003")` | Agent thấy từ "thiết bị" → gọi thêm `inspect_device`, nhưng `lookup_user` đã trả `assigned_assets` | Thêm rule: `lookup_user` response đã bao gồm `assigned_assets`, không cần gọi thêm `inspect_device` |
+| H13 | wrong_tool | `check_service_status` ✓ + `inspect_device(LT-204)` **thiếu `check="vpn"`** | Khi gọi song song, agent mất context "VPN" → dùng default `check="all"` | Thêm rule: `check` phải map theo dịch vụ được đề cập (vpn→vpn, wifi→network...) |
+| H17 | wrong_tool | `inspect_device(LT-318, check="all")` thay vì `check="vpn"` | Yêu cầu 3 tool, agent không map "VPN certificate" → `check="vpn"` | Cùng fix với H13: map `check=<service>` rõ trong prompt |
+| H10 | missing_info | `inspect_device(asset_id="laptop", check="network")` | Asset ID mơ hồ "laptop của mình" → agent tự đoán, không hỏi lại | Thêm rule: asset_id phải dạng XX-NNN, nếu không rõ → clarify(response_type="text") |
+| H11 | missing_info | `lookup_user(employee_id="Sales")` | Employee ID mơ hồ "bên Sales" → agent tự đoán = tên phòng ban | Thêm rule: employee_id phải dạng EMP-NNNN, nếu không rõ → clarify(response_type="text") |
+| H19 | missing_info | `check_service_status(email, environment="staging")` | "Demo" không thuộc enum → agent tự map thành staging | Thêm rule: từ ngoài enum (demo/test/dev...) → clarify(response_type="choice", options=["production","staging"]) |
+| H12 | wrong_boundary | `create_ticket(confirmed=True)` | Tạo ticket ngay, không hỏi xác nhận | Thêm confirmation boundary: clarify(yes_no) BẮT BUỘC trước, create_ticket chỉ sau khi user đồng ý |
+| M05 | wrong_boundary | `create_ticket(confirmed=False)` → rồi mới `clarify` | Sai thứ tự: tạo ticket trước, xác nhận sau | Thêm rule: clarify là bước ĐẦU TIÊN, không được gọi create_ticket trước clarify |
+| M09 | wrong_boundary | `create_ticket(confirmed=True, priority="critical")` | Payload đổi (medium→critical + nội dung mới) nhưng agent dùng confirmation cũ | Thêm rule: nếu summary/priority/asset_id thay đổi → confirmation cũ bị hủy, phải clarify lại |
 
 ## B3. Team eval cases
 
