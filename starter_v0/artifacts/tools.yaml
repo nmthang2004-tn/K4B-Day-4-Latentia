@@ -8,14 +8,14 @@
 tools:
   # ---------------- Core tools ----------------
   - name: clarify
-    description: "Gửi một câu hỏi làm rõ hoặc xin xác nhận từ người dùng. BẮT BUỘC dùng khi: (1) Thiếu thông tin bắt buộc như asset_id (dạng XX-NNN), employee_id (dạng EMP-NNNN); (2) Môi trường (environment) mơ hồ hoặc không thuộc enum [production, staging] -> dùng response_type='choice' với options=['production', 'staging']; (3) Trước khi tạo ticket hỗ trợ (create_ticket) -> dùng response_type='yes_no' để xin xác nhận trước khi ghi."
+    description: "Gửi một câu hỏi làm rõ hoặc xin xác nhận từ người dùng. BẮT BUỘC dùng khi: (1) Thiếu thông tin bắt buộc như asset_id (dạng XX-NNN), employee_id (dạng EMP-NNNN) -> dùng response_type='text'; (2) Môi trường (environment) mơ hồ hoặc không thuộc enum [production, staging] -> dùng response_type='choice' với options=['production', 'staging']; (3) Khi người dùng yêu cầu tạo ticket (create_ticket) -> BẮT BUỘC dùng response_type='yes_no' để xin người dùng xác nhận Có/Không. TUYỆT ĐỐI KHÔNG dùng response_type='text' khi xin xác nhận tạo ticket!"
     parameters:
       type: object
       properties:
         question: {type: string, default: "", description: "Câu hỏi làm rõ hoặc nội dung yêu cầu xác nhận"}
-        response_type: {type: string, enum: [text, yes_no, choice], default: "text", description: "Kiểu trả lời: 'text' khi cần thông tin định danh, 'yes_no' khi xin xác nhận tạo ticket, 'choice' khi có danh sách lựa chọn cụ thể"}
+        response_type: {type: string, enum: [text, yes_no, choice], description: "Kiểu trả lời: BẮT BUỘC chọn 'yes_no' khi xin xác nhận tạo ticket (create_ticket); chọn 'text' khi cần hỏi thông tin định danh (asset_id, employee_id); chọn 'choice' khi có danh sách lựa chọn cụ thể"}
         options: {type: array, default: [], items: {type: string}, description: "Danh sách lựa chọn hợp lệ khi response_type là 'choice'"}
-      required: [question]
+      required: [question, response_type]
 
   - name: search_kb
     description: "Tìm bài viết hướng dẫn hỗ trợ kỹ thuật nội bộ trong Knowledge Base. Dùng khi người dùng tìm kiếm hướng dẫn giải quyết sự cố, cách cấu hình thiết bị, hoặc tài liệu kỹ thuật."
@@ -96,11 +96,11 @@ tools:
       required: [query]
 
   - name: create_ticket
-    description: "Tạo một ticket hỗ trợ kỹ thuật mới. ĐÂY LÀ HÀNH ĐỘNG GHI DỮ LIỆU CẦN XÁC NHẬN (CONFIRMATION BOUNDARY): TUYỆT ĐỐI KHÔNG gọi trực tiếp khi người dùng mới chỉ yêu cầu hoặc thay đổi thông tin ticket. BẮT BUỘC phải dùng clarify(response_type='yes_no') để xin xác nhận trước. Chỉ khi người dùng đã xác nhận rõ ràng thì mới gọi tool này với confirmed=true."
+    description: "Tạo một ticket hỗ trợ kỹ thuật mới. ĐÂY LÀ HÀNH ĐỘNG GHI DỮ LIỆU CẦN XÁC NHẬN (CONFIRMATION BOUNDARY): TUYỆT ĐỐI KHÔNG gọi trực tiếp khi người dùng mới chỉ yêu cầu hoặc thay đổi thông tin ticket. BẮT BUỘC phải dùng clarify(response_type='yes_no') để xin xác nhận trước (ví dụ: 'Bạn có xác nhận tạo ticket lỗi VPN trên LT-204 mức high không?'). TUYỆT ĐỐI KHÔNG dùng clarify với response_type='text' khi người dùng đã cung cấp đủ thông tin sự cố trong câu lệnh. Chỉ khi người dùng đã xác nhận đồng ý thì mới gọi tool này với confirmed=true."
     parameters:
       type: object
       properties:
-        summary: {type: string, default: "", description: "Tóm tắt sự cố"}
+        summary: {type: string, default: "", description: "Tóm tắt sự cố (trích xuất trực tiếp từ yêu cầu của người dùng, ví dụ: 'Lỗi VPN trên LT-204')"}
         priority: {type: string, enum: [low, medium, high, critical], default: "medium", description: "Mức ưu tiên của ticket"}
         asset_id: {type: string, default: "", description: "Mã tài sản liên quan nếu có"}
         confirmed: {type: boolean, default: false, description: "Chỉ đặt true khi người dùng đã xác nhận đồng ý tạo ticket qua bước clarify trước đó"}

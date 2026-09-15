@@ -59,7 +59,7 @@ total_cases`, và tool result error đã được review thủ công.
 |---|---|---|---|---:|---:|---|
 | v0 | Starter chưa sửa | Baseline — đo lỗi gốc | case_accuracy | — | **70%** (21/30) | `runs/v0_B_base_openrouter_20260915T182340501222.json` |
 | v1 | Thêm **Tool Routing Rules** + **Clarify Rules** + **Confirmation Boundary** vào `system_prompt.md`; cải thiện description `check`, `employee_id`, `environment`, `create_ticket` trong `tools.yaml` | **GT1** wrong_tool (H04,H13,H17): prompt thiếu routing rule → thêm bảng route + map `check=<service>`. **GT2** missing_info (H10,H11,H19): agent tự đoán ID → bắt buộc clarify khi thiếu. **GT3** wrong_boundary (H12,M05,M09): không có confirmation order → clarify(yes_no) bắt buộc TRƯỚC create_ticket | case_accuracy | 70% | **96.67%** (29/30) | `runs/v1_B_base_openrouter_20260915T193806821474.json` |
-| v2 | Chỉnh `tools.yaml`: thêm `response_type` mặc định `yes_no` vào `clarify` khi dùng trong ngữ cảnh xác nhận write action; hoặc thêm rule trong prompt: "khi xác nhận trước create_ticket phải dùng `response_type=yes_no`" | **GT4** wrong_boundary (H12 còn lại): v1 gọi đúng `clarify` nhưng sai `response_type="text"` thay vì `"yes_no"` → tool declaration hoặc prompt chưa ràng buộc rõ kiểu phản hồi cho confirmation boundary | case_accuracy | 96.67% | — (chờ chạy) | — |
+| v2 | **Tools.yaml:** Thêm `response_type` vào `required` của `clarify`, quy định bắt buộc `response_type='yes_no'` cho confirmation boundary tạo ticket; làm rõ `create_ticket` không hỏi lại text khi đã đủ thông tin. **System_prompt.md:** Quy định bắt buộc gọi `clarify(response_type='yes_no')` ngay khi nhận yêu cầu tạo ticket. | **GT4** wrong_boundary (H12 còn lại): v1 gọi đúng `clarify` nhưng sai `response_type="text"` thay vì `"yes_no"` → ràng buộc `response_type` trong schema tools.yaml và prompt | case_accuracy | 96.67% | — (chờ chạy eval v2) | — |
 | v3 | *(điền sau khi phân tích kết quả v2)* | *(đặt sau khi xem lỗi còn lại của v2)* | case_accuracy | — | — | — |
 
 ## B2. Failure analysis
@@ -130,8 +130,8 @@ nhóm tự xây.
 
 ## B7. Technical reflection
 
-- **Fix thuộc `system_prompt.md`:** Tool Routing Rules (v1), Clarify Rules cho asset_id/employee_id/environment (v1), Confirmation Boundary order (v1); dự kiến thêm rule `response_type=yes_no` khi confirm write action (v2).
-- **Fix thuộc `tools.yaml`:** Cải thiện description `check` enum của `inspect_device`, description `employee_id`/`environment` rõ ràng hơn, thêm ghi chú `confirmed` trong `create_ticket` (v1); dự kiến cập nhật clarify description để ràng buộc `response_type=yes_no` trong ngữ cảnh confirmation (v2).
+- **Fix thuộc `system_prompt.md`:** Tool Routing Rules (v1), Clarify Rules cho asset_id/employee_id/environment (v1), Confirmation Boundary order (v1); (v2) Củng cố quy tắc gọi ngay `clarify(response_type='yes_no')` khi nhận yêu cầu tạo ticket mà không hỏi lại bằng text.
+- **Fix thuộc `tools.yaml`:** Cải thiện description `check` enum của `inspect_device`, description `employee_id`/`environment` rõ ràng hơn, thêm ghi chú `confirmed` trong `create_ticket` (v1); (v2) Thêm `response_type` vào `required` của `clarify`, ràng buộc `response_type='yes_no'` khi xác nhận tạo ticket, và cập nhật `create_ticket` description.
 - **Failure không thể chỉ nhìn automatic score:** H12 v1 bị sai `response_type` (text vs yes_no) — automatic score chỉ thấy `wrong_boundary`, phải đọc `failures[]` trong run JSON mới biết chính xác arg nào sai. M05 v0 gọi sai thứ tự create_ticket→clarify — cần đọc tool_results sequence, không chỉ nhìn tên tool.
 - **Nếu có thêm một vòng (v3):** Sau khi v2 fix H12, kiểm tra xem còn case nào multiturn carry context bị fail không; nếu còn thì thử thêm rule "explicit context carry" cho environment và asset_id trong hội thoại nhiều lượt.
 
