@@ -21,15 +21,10 @@
 ## Nhận xét chung
 
 - Kết quả và bằng chứng:
-  - **Base: 100%** (30/30 cases)
-  - **Extension: 100%** (10/10 cases)
-  - **Adversarial: 100%** (12/12 cases)
+  - **Base: 100%** (30/30 cases) - `runs/v2_B_base_openrouter_20260915T195900206901.json`
+  - **Extension: 100%** (10/10 cases) - `runs/v3_B_extension_openrouter_20260915T224216842939.json`
+  - **Adversarial: 100%** (12/12 cases) - `runs/v3_B_adversarial_openrouter_20260915T222902911407.json`
   - **Tổng: 52/52 PASS (100%)**
-  - Evidence:
-    - `runs/v2_B_base_openrouter_20260915T195900206901.json`
-    - `runs/v3_B_base_openrouter_20260915T222334653368.json`
-    - `runs/v3_B_extension_openrouter_20260915T224216842939.json`
-    - `runs/v3_B_adversarial_openrouter_20260915T222902911407.json`
 
 - Thay đổi hiệu quả nhất:
   - Thêm confirmation boundary với `response_type='yes_no'` giúp base đạt 100%
