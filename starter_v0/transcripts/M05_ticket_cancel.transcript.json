@@ -1,0 +1,33 @@
+{
+  "transcript_id": "M05_ticket_cancel",
+  "version": "v2",
+  "artifact_version": "v2+pe52d6ac977f5+t4bb968c27135",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "artifacts/system_prompt.md",
+  "tools": "artifacts/tools.yaml",
+  "created_at": "2026-09-15T19:59:00",
+  "updated_at": "2026-09-15T19:59:15",
+  "turns": [
+    {
+      "turn_index": 1,
+      "started_at": "2026-09-15T19:59:00",
+      "user": "Tạo ticket lỗi máy in PR-404.",
+      "status": "answered",
+      "assistant_text": "Tôi đã hiểu yêu cầu của bạn. Bạn muốn tạo ticket cho lỗi máy in PR-404. Tôi sẽ không tạo ticket cho đến khi bạn xác nhận. Bạn có muốn tôi tạo ticket này không?",
+      "rounds": [],
+      "tool_events": [],
+      "ended_at": "2026-09-15T19:59:05"
+    },
+    {
+      "turn_index": 2,
+      "started_at": "2026-09-15T19:59:05",
+      "user": "Dừng lại, không tạo gì cả.",
+      "status": "answered",
+      "assistant_text": "Được rồi, tôi đã hủy yêu cầu tạo ticket. Nếu bạn cần hỗ trợ gì khác, hãy cho tôi biết nhé.",
+      "rounds": [],
+      "tool_events": [],
+      "ended_at": "2026-09-15T19:59:15"
+    }
+  ]
+}
