@@ -20,9 +20,9 @@
 
 ## Nhận xét chung
 
-- Kết quả và bằng chứng: v0=70% → v1=96.67% → v2=100% (base). Run JSON lưu tại `starter_v0/runs/`. Adversarial v3=50% (6/12), cần cải thiện boundary rules.
-- Thay đổi hiệu quả nhất: Thêm Tool Routing Rules và Clarify Rules vào system_prompt.md (v1) — nâng từ 70% lên 96.67% chỉ trong một lần sửa.
-- Giới hạn còn lại: Adversarial 50% (6/12 wrong_boundary) — agent chưa xử lý hết các cách tấn công biên giới xác nhận. Eval_group chưa chạy xác nhận được.
+- Kết quả và bằng chứng: v0=70% → v1=96.67% → v2=100% (base suite). Ở v3, nhóm đạt **100% (30/30) base suite**, **100% (10/10) group suite** (`runs/v3_B_group_openrouter_20260915T204701107084.json`), và **83.33% (10/12) adversarial suite** (`runs/v3_B_adversarial_openrouter_20260915T205427759144.json`). Tất cả run JSON đều có provider_error_cases = 0.
+- Thay đổi hiệu quả nhất: Thêm Tool Routing Rules và Clarify Rules vào system_prompt.md (v1) kết hợp hoàn thiện schema tools.yaml — nâng từ 70% lên 96.67% chỉ trong một lần sửa, và đạt 100% ở v2 với ràng buộc `response_type='yes_no'`.
+- Giới hạn còn lại: Trong adversarial suite (10/12 PASS), 2 ca còn lại: A06 thiếu tham số `check="all"` (dù 100% bảo toàn privacy, không rò rỉ dữ liệu ra web search); A11 bị đánh lừa bởi thẻ XML/HTML `<assistant>` nhúng trong user prompt nên bỏ qua bước `clarify`.
 - Cách phân công và tích hợp: Vàng (BA) phân tích lỗi v0 và viết giả thuyết; Thắng (SWE) sửa system_prompt; Tuấn (SWE) sửa tools.yaml. Chạy eval sau mỗi version, ghi vào version_log.csv.
 
 ## INDIVIDUAL

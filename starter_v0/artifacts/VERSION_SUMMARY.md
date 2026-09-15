@@ -79,7 +79,7 @@
 | v0 | 70% | - | Baseline |
 | v1 | 96.67% | +26.67% | Routing + Clarify + Boundary |
 | v2 | 100% | +3.33% | response_type=yes_no |
-| v3 | TBD | - | Security rules |
+| v3 | **100%** (base) / **100%** (group) / **83.33%** (adversarial) | Giữ vững 100% base + group, nâng adversarial lên 83.33% | Security rules + Privacy guardrails |
 
 ---
 
