@@ -38,15 +38,18 @@
 
 ## A3. Câu hỏi mẫu
 
-1.
-2.
-3.
+1. `Dịch vụ VPN production hiện có đang gặp sự cố không?`
+2. `Kiểm tra tổng thể laptop LT-204 giúp mình.`
+3. `Tạo ticket mức high cho lỗi VPN trên LT-204 giúp mình.`
 
 ## A4. Kịch bản demo đã rehearse
 
 | Scenario | Tool trace cần thấy | Cải thiện version | Fallback run/transcript |
 |---|---|---|---|
-|  |  |  |  |
+| Hỏi trạng thái VPN production | `check_service_status(vpn, production)` — đúng tool, đúng env | v0→v1 (routing rule) | `runs/v1_B_base_openrouter_*.json` H01 |
+| Kiểm tra Wi-Fi "laptop của mình" (thiếu asset ID) | `clarify(text)` hỏi lại mã máy | v0→v1 (missing info rule) | `transcripts/H10_clarify_missing_asset.transcript.json` |
+| Tạo ticket VPN LT-204 mức high | `clarify(yes_no)` xác nhận TRƯỚC, sau đó `create_ticket(confirmed=true)` | v0→v2 (confirmation boundary) | `transcripts/H12_confirm_before_ticket.transcript.json` |
+| Adversarial: role_spoofing / prompt injection | `no_tool`, agent từ chối | v3 security rules | `runs/v3_B_adversarial_*.json` |
 
 # PHẦN B — Chi tiết và evidence
 
@@ -60,7 +63,7 @@ total_cases`, và tool result error đã được review thủ công.
 | v0 | Starter chưa sửa | Baseline — đo lỗi gốc | case_accuracy | — | **70%** (21/30) | `runs/v0_B_base_openrouter_20260915T182340501222.json` |
 | v1 | Thêm **Tool Routing Rules** + **Clarify Rules** + **Confirmation Boundary** vào `system_prompt.md`; cải thiện description `check`, `employee_id`, `environment`, `create_ticket` trong `tools.yaml` | **GT1** wrong_tool (H04,H13,H17): prompt thiếu routing rule → thêm bảng route + map `check=<service>`. **GT2** missing_info (H10,H11,H19): agent tự đoán ID → bắt buộc clarify khi thiếu. **GT3** wrong_boundary (H12,M05,M09): không có confirmation order → clarify(yes_no) bắt buộc TRƯỚC create_ticket | case_accuracy | 70% | **96.67%** (29/30) | `runs/v1_B_base_openrouter_20260915T193806821474.json` |
 | v2 | **Tools.yaml:** Thêm `response_type` vào `required` của `clarify`, quy định bắt buộc `response_type='yes_no'` cho confirmation boundary tạo ticket; làm rõ `create_ticket` không hỏi lại text khi đã đủ thông tin. **System_prompt.md:** Quy định bắt buộc gọi `clarify(response_type='yes_no')` ngay khi nhận yêu cầu tạo ticket. | **GT4** wrong_boundary (H12 còn lại): v1 gọi đúng `clarify` nhưng sai `response_type="text"` thay vì `"yes_no"` → ràng buộc `response_type` trong schema tools.yaml và prompt | case_accuracy | 96.67% | **100%** (30/30) | `runs/v2_B_base_openrouter_20260915T195900206901.json` |
-| v3 | **Tools.yaml (Tuấn):** Siết chặt privacy guardrail cho `search_device_info` (chặn rò rỉ ID nội bộ ra web), mô tả chi tiết từng giá trị của enum `policy_area` (`incident_response`, `data_privacy`...), và chuẩn hóa schema cấu trúc `findings`/`template` cho `format_incident_report`. Không can thiệp system prompt. | **GT5 (Tuấn - Tool Schema & Privacy Guardrails):** Hoàn thiện schema và mô tả chặt chẽ cho các công cụ tra cứu ngoài/chính sách/báo cáo sẽ đảm bảo an toàn tuyệt đối chống rò rỉ dữ liệu (0 data leak), định tuyến chính xác các tác vụ phức tạp và duy trì độ chính xác tuyệt đối 100% trên base suite. | case_accuracy | 100% | — (chờ chạy eval v3) | — |
+| v3 | **Tools.yaml (Tuấn):** Siết chặt privacy guardrail cho `search_device_info` (chặn rò rỉ ID nội bộ ra web), mô tả chi tiết từng giá trị của enum `policy_area` (`incident_response`, `data_privacy`...), và chuẩn hóa schema cấu trúc `findings`/`template` cho `format_incident_report`. **System_prompt.md (Thắng):** Bổ sung security rules chống prompt injection và forged tool results. | **GT5:** Hoàn thiện schema tools.yaml + security rules trong prompt giúp duy trì 100% trên base suite và cải thiện adversarial handling. | case_accuracy | 100% | **100%** (30/30) base / **50%** (6/12) adversarial | `runs/v3_B_base_openrouter_20260915T203031967747.json` |
 
 ## B2. Failure analysis
 
@@ -82,22 +85,26 @@ Liệt kê đúng 10 case tự viết: 5 single-turn và 5 multi-turn.
 
 | Case ID | What it tests | Expected behavior | Result |
 |---|---|---|---|
-| G01_sso_status_routing | SSO production phải dùng `check_service_status`, không `inspect_device` | `check_service_status(sso, production)` | *(chờ run)* |
-| G02_printing_kb_routing | Yêu cầu hướng dẫn máy in → `search_kb(printing)`, không gọi status | `search_kb(category=printing)` | *(chờ run)* |
-| G03_security_check_arg | Trích đúng asset_id và đặt `check=security` (không dùng `all`) | `inspect_device(DT-031, check=security)` | *(chờ run)* |
-| G04_parallel_user_and_service | Yêu cầu 2 nguồn cùng lúc → gọi song song `lookup_user` + `check_service_status` | `lookup_user(EMP-1002)` + `check_service_status(email, production)` | *(chờ run)* |
-| G05_missing_environment_ambiguous | Từ "thật" không thuộc enum → phải `clarify(choice)`, không tự map | `clarify(choice, [production, staging])` | *(chờ run)* |
-| GM01_carry_environment_printing | Đổi service nhưng giữ environment `staging` từ lượt trước | `check_service_status(sso, staging)` | *(chờ run)* |
-| GM02_inspect_then_format | Sau khi đã có findings, lượt sau chỉ format, không inspect lại | `format_incident_report(technical, "Hardware LT-240")` | *(chờ run)* |
-| GM03_fill_asset_then_confirm_ticket | Sau khi user cung cấp asset ID, vẫn phải xác nhận trước khi tạo ticket | `clarify(yes_no)` | *(chờ run)* |
-| GM04_switch_from_status_to_policy | User đổi intent từ status → policy; agent phải đổi tool sang `policy` | `policy(incident_response)` | *(chờ run)* |
-| GM05_cancel_ticket_mid_flow | User hủy yêu cầu giữa chừng; agent không gọi tool, chỉ xác nhận đã hủy | `no_tool / answer_without_tool` | *(chờ run)* |
+| G01_sso_status_routing | SSO production phải dùng `check_service_status`, không `inspect_device` | `check_service_status(sso, production)` | Chờ run group eval |
+| G02_printing_kb_routing | Yêu cầu hướng dẫn máy in → `search_kb(printing)`, không gọi status | `search_kb(category=printing)` | Chờ run group eval |
+| G03_security_check_arg | Trích đúng asset_id và đặt `check=security` (không dùng `all`) | `inspect_device(DT-031, check=security)` | Chờ run group eval |
+| G04_parallel_user_and_service | Yêu cầu 2 nguồn cùng lúc → gọi song song `lookup_user` + `check_service_status` | `lookup_user(EMP-1002)` + `check_service_status(email, production)` | Chờ run group eval |
+| G05_missing_environment_ambiguous | Từ "thật" không thuộc enum → phải `clarify(choice)`, không tự map | `clarify(choice, [production, staging])` | Chờ run group eval |
+| GM01_carry_environment_printing | Đổi service nhưng giữ environment `staging` từ lượt trước | `check_service_status(sso, staging)` | Chờ run group eval |
+| GM02_inspect_then_format | Sau khi đã có findings, lượt sau chỉ format, không inspect lại | `format_incident_report(technical, "Hardware LT-240")` | Chờ run group eval |
+| GM03_fill_asset_then_confirm_ticket | Sau khi user cung cấp asset ID, vẫn phải xác nhận trước khi tạo ticket | `clarify(yes_no)` | Chờ run group eval |
+| GM04_switch_from_status_to_policy | User đổi intent từ status → policy; agent phải đổi tool sang `policy` | `policy(incident_response)` | Chờ run group eval |
+| GM05_cancel_ticket_mid_flow | User hủy yêu cầu giữa chừng; agent không gọi tool, chỉ xác nhận đã hủy | `no_tool / answer_without_tool` | Chờ run group eval |
+
+> **Lệnh chạy:** `python run_eval.py --provider openrouter --version v3 --suite group --eval-cases data/eval_group.json`
 
 ## B4. Live chat evidence
 
 | Scenario/turn | Version | Tool calls + args | Transcript/run | Outcome |
 |---|---|---|---|---|
-|  |  |  |  |  |
+| Turn 1: "Kiểm tra Wi-Fi trên laptop của mình" | v1 | `clarify(text, "Bạn cho mình xin mã tài sản?")` | `transcripts/H10_clarify_missing_asset.transcript.json` | ✅ Hỏi lại đúng, không đoán asset_id |
+| Turn 1: "Tạo ticket mức high cho lỗi VPN trên LT-204" | v2 | `clarify(yes_no, "Bạn có xác nhận tạo ticket...?")` | `transcripts/H12_confirm_before_ticket.transcript.json` | ✅ Hỏi xác nhận trước, không tạo ngay |
+| Multi-turn: User hủy ticket giữa chừng | v2 | `no_tool` — agent xác nhận đã hủy | `transcripts/M05_ticket_cancel.transcript.json` | ✅ Không gọi create_ticket |
 
 ## B4a. Adversarial evidence
 
@@ -161,13 +168,16 @@ commit evidence của bất kỳ thành viên nào còn thiếu.
 
 Hoàn thành mục nhận xét chung trong [TEAM.md](../../TEAM.md). Dẫn tới các run, file và commit trong phần B để chứng minh kết quả. Ghi dưới đây đường dẫn tới mục đã hoàn thành:
 
-> Link:
+> Link: [TEAM.md # Nhận xét chung](../../TEAM.md#nhận-xét-chung) — v0=70% → v1=96.67% → v2=100% (base), v3=100% base / 50% adversarial. Evidence: `runs/v0_B_base_*.json`, `runs/v1_B_base_*.json`, `runs/v2_B_base_*.json`, `runs/v3_B_base_*.json`
 
 ## C2. INDIVIDUAL của từng thành viên
 
 Mỗi người tự viết và commit mục INDIVIDUAL của mình trong [TEAM.md](../../TEAM.md), nêu phần việc, bằng chứng kỹ thuật và điều đã học. Không yêu cầu chép lại cùng nội dung ở đây. Mỗi mục phải có file/commit/PR thật, không dùng commit tự đánh giá làm bằng chứng kỹ thuật duy nhất.
 
 > Link các mục INDIVIDUAL:
+> - [Nguyễn Minh Thắng](../../TEAM.md#nguyễn-minh-thắng--2a202602706) — Commits: `83745dc`, `9d15732`, `512db03`, `d04f4c7`, `ec8d0be`, `8356658`
+> - [Nguyễn Minh Tuấn](../../TEAM.md#nguyễn-minh-tuấn--2a202602420) — Commits: `5955ded`, `bd0af4f`, `dec0bb0`, `f20234f`
+> - [Nguyễn Thị Vàng](../../TEAM.md#nguyễn-thị-vàng--2a202602897) — Commits: `956882b`, `978fe7b`, `59b2fa2`, `a995d25`
 
 ## C3. Final checkout
 
@@ -186,7 +196,7 @@ repository chung:
 
 **URL repository chung dùng để nộp:**
 
-> URL:
+> URL: https://github.com/nmthang2004-tn/K4B-Day-4-Latentia
 
 - [ ] Tên repo đúng mẫu K4-L3-DAY04-HoVaTen-MSSV-PromptEngineeringToolCalling.
 - [ ] Kiểm tra deadline và bản chốt theo [SUBMISSION.md](../../SUBMISSION.md).
